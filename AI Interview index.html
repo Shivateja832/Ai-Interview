@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Interview</title>
+
+    <!-- Vapi Web SDK (UMD) -->
+    <script src="https://unpkg.com/@vapi-ai/web@latest/dist/index.umd.js"></script>
+
+    <style>
+      body { font-family: system-ui, Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+      button { padding: 12px 16px; font-size: 16px; cursor: pointer; }
+      .muted { color: #666; }
+      code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+    </style>
+  </head>
+
+  <body>
+    <h1>AI Interview</h1>
+    <p class="muted">
+      Opened from your invite link. Click <b>Join</b> and allow microphone/camera permissions.
+    </p>
+
+    <button id="join">Join interview</button>
+    <button id="leave" disabled>Leave</button>
+
+    <p id="status" class="muted"></p>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const joinBtn = document.getElementById("join");
+      const leaveBtn = document.getElementById("leave");
+
+      // Invite link will look like:
+      // https://YOUR_GITHUB_USERNAME.github.io/ai-interview/?callId=call_xxx
+      const params = new URLSearchParams(window.location.search);
+      const callId = params.get("callId");
+
+      // Create Vapi client (public key is safe in browser)
+      const vapi = new window.Vapi("YOUR_PUBLIC_VAPI_KEY");
+
+      vapi.on("call-start", () => {
+        statusEl.textContent = "Connected. Interview started.";
+        joinBtn.disabled = true;
+        leaveBtn.disabled = false;
+      });
+
+      vapi.on("call-end", () => {
+        statusEl.textContent = "Call ended.";
+        joinBtn.disabled = false;
+        leaveBtn.disabled = true;
+      });
+
+      vapi.on("error", (e) => {
+        console.error(e);
+        statusEl.textContent = "Error: " + (e?.message || JSON.stringify(e));
+      });
+
+      joinBtn.onclick = async () => {
+        if (!callId) {
+          statusEl.textContent = "Missing callId in the link. Please open the invite link again.";
+          return;
+        }
+
+        statusEl.textContent = "Connecting...";
+        // Start/join the web call by callId
+        await vapi.start({ callId });
+      };
+
+      leaveBtn.onclick = async () => {
+        await vapi.stop();
+      };
+    </script>
+  </body>
+</html>
